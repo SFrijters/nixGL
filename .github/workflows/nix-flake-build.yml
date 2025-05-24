@@ -1,0 +1,35 @@
+name: "nix flake build nixGLIntel"
+on:
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+  push:
+    paths-ignore:
+      - 'README.md'
+
+jobs:
+  nix-flake-check:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+      fail-fast: false
+    runs-on: ${{matrix.os}}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Flake metadata
+      run: |
+        nix flake metadata
+        nix flake show
+
+    - name: Flake build
+      run: |
+        nix build .#nixGLIntel
+
+    - name: Formatter check
+      run: |
+        nix fmt
+        git diff --exit-code
