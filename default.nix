@@ -1,4 +1,5 @@
-{ ## Nvidia informations.
+{
+  ## Nvidia informations.
   # Version of the system kernel module. Let it to null to enable auto-detection.
   nvidiaVersion ? null,
   # Hash of the Nvidia driver .run file. null is fine, but fixing a value here
@@ -16,19 +17,28 @@
   # Make sure to enable config.allowUnfree to the instance of nixpkgs to be
   # able to access the nvidia drivers.
   pkgs ? import <nixpkgs> {
-    config = { allowUnfree = true; };
+    config = {
+      allowUnfree = true;
+    };
   },
   # Enable all Intel specific extensions which only works on x86_64
-  enableIntelX86Extensions ? true
+  enableIntelX86Extensions ? true,
 }:
-pkgs.callPackage ./nixGL.nix ({
-  inherit
-    nvidiaVersion
-    nvidiaVersionFile
-    nvidiaHash
-    enable32bits
-    ;
-  } // (if enableIntelX86Extensions then {}
-  else {
-    intel-media-driver = null;
-  }))
+pkgs.callPackage ./nixGL.nix (
+  {
+    inherit
+      nvidiaVersion
+      nvidiaVersionFile
+      nvidiaHash
+      enable32bits
+      ;
+  }
+  // (
+    if enableIntelX86Extensions then
+      { }
+    else
+      {
+        intel-media-driver = null;
+      }
+  )
+)

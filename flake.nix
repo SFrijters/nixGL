@@ -28,43 +28,55 @@
           lib.attrsets.recursiveUpdate acc (injectSystem system value)
         ) { } (lib.genAttrs systems f);
     in
-      forSystems
-        [
-          "aarch64-linux"
-          "aarch64-darwin"
-          "x86_64-darwin"
-          "x86_64-linux"
-        ](
-          system:
-      let
-        isIntelX86Platform = system == "x86_64-linux";
-        pkgs = import ./default.nix {
-          pkgs = nixpkgs.legacyPackages.${system};
-          enable32bits = isIntelX86Platform;
-          enableIntelX86Extensions = isIntelX86Platform;
-        };
-      in rec {
-
-        packages = {
-          # makes it easy to use "nix run nixGL --impure -- program"
-          default = pkgs.auto.nixGLDefault;
-
-          nixGLDefault = pkgs.auto.nixGLDefault;
-          nixGLNvidia = pkgs.auto.nixGLNvidia;
-          nixGLNvidiaBumblebee = pkgs.auto.nixGLNvidiaBumblebee;
-          nixGLIntel = pkgs.nixGLIntel;
-          nixVulkanNvidia = pkgs.auto.nixVulkanNvidia;
-          nixVulkanIntel = pkgs.nixVulkanIntel;
-        };
-
-        overlays.default = final: _:
-          let isIntelX86Platform = final.system == "x86_64-linux";
-          in {
-            nixgl = import ./default.nix {
-              pkgs = final;
-              enable32bits = isIntelX86Platform;
-              enableIntelX86Extensions = isIntelX86Platform;
-            };
+    forSystems
+      [
+        "aarch64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+        "x86_64-linux"
+      ]
+      (
+        system:
+        let
+          isIntelX86Platform = system == "x86_64-linux";
+          nixpkgs_ = import nixpkgs {
+            inherit system;
+            allowUnfree = true;
           };
-      });
+          pkgs = import ./default.nix {
+            pkgs = nixpkgs_;
+            enable32bits = isIntelX86Platform;
+            enableIntelX86Extensions = isIntelX86Platform;
+          };
+        in
+        rec {
+
+          packages = {
+            # makes it easy to use "nix run nixGL --impure -- program"
+            default = pkgs.auto.nixGLDefault;
+
+            nixGLDefault = pkgs.auto.nixGLDefault;
+            nixGLNvidia = pkgs.auto.nixGLNvidia;
+            nixGLNvidiaBumblebee = pkgs.auto.nixGLNvidiaBumblebee;
+            nixGLIntel = pkgs.nixGLIntel;
+            nixVulkanNvidia = pkgs.auto.nixVulkanNvidia;
+            nixVulkanIntel = pkgs.nixVulkanIntel;
+          };
+
+          overlays.default =
+            final: _:
+            let
+              isIntelX86Platform = final.system == "x86_64-linux";
+            in
+            {
+              nixgl = import ./default.nix {
+                pkgs = final;
+                enable32bits = isIntelX86Platform;
+                enableIntelX86Extensions = isIntelX86Platform;
+              };
+            };
+
+          formatter = nixpkgs_.nixfmt-tree;
+        }
+      );
 }
