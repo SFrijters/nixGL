@@ -1,11 +1,41 @@
 {
   description = "A wrapper tool for nix OpenGL applications";
 
-  inputs.flake-utils.url = "github:numtide/flake-utils";
-  inputs.nixpkgs.url = "github:nixos/nixpkgs";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs";
 
-  outputs = { self, nixpkgs, flake-utils }:
-    (flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      nixpkgs,
+      ...
+    }:
+    let
+      inherit (nixpkgs) lib;
+      # Boilerplate to make the rest of the flake more readable
+      # Do not inject system into these attributes
+      flatAttrs = [
+        "overlays"
+        "nixosModules"
+      ];
+      # Inject a system attribute if the attribute is not one of the above
+      injectSystem =
+        system:
+        lib.mapAttrs (name: value: if builtins.elem name flatAttrs then value else { ${system} = value; });
+      # Combine the above for a list of 'systems'
+      forSystems =
+        systems: f:
+        lib.attrsets.foldlAttrs (
+          acc: system: value:
+          lib.attrsets.recursiveUpdate acc (injectSystem system value)
+        ) { } (lib.genAttrs systems f);
+    in
+      forSystems
+        [
+          "aarch64-linux"
+          "aarch64-darwin"
+          "x86_64-darwin"
+          "x86_64-linux"
+        ](
+          system:
       let
         isIntelX86Platform = system == "x86_64-linux";
         pkgs = import ./default.nix {
@@ -29,7 +59,7 @@
 
         # deprecated attributes for retro compatibility
         defaultPackage = packages;
-      })) // rec {
+
         # deprecated attributes for retro compatibility
         overlay = overlays.default;
         overlays.default = final: _:
@@ -41,5 +71,5 @@
               enableIntelX86Extensions = isIntelX86Platform;
             };
           };
-      };
+      });
 }
