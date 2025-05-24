@@ -19,6 +19,7 @@
   shellcheck,
   pcre,
   runCommand,
+  runCommandLocal,
   linuxPackages,
   fetchurl,
   lib,
@@ -254,7 +255,7 @@ let
             #
             # builtins.readFile is not able to read /proc files. See
             # https://github.com/NixOS/nix/issues/3539.
-            runCommand "impure-nvidia-version-file" {
+            runCommandLocal "impure-nvidia-version-file" {
               # To avoid sharing the build result over time or between machine,
               # Add an impure parameter to force the rebuild on each access.
               time = builtins.currentTime;
@@ -271,7 +272,7 @@ let
             # Get if from the nvidiaVersionFile
             let
               data = builtins.readFile _nvidiaVersionFile;
-              versionMatch = builtins.match ".*Module  ([0-9.]+)  .*" data;
+              versionMatch = builtins.match ".*NVIDIA UNIX.*Kernel Module.*  ([0-9]+\\.[0-9]+)  .*" data;
             in
             if versionMatch != null then builtins.head versionMatch else null;
 
