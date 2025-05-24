@@ -57,11 +57,6 @@
           nixVulkanIntel = pkgs.nixVulkanIntel;
         };
 
-        # deprecated attributes for retro compatibility
-        defaultPackage = packages;
-
-        # deprecated attributes for retro compatibility
-        overlay = overlays.default;
         overlays.default = final: _:
           let isIntelX86Platform = final.system == "x86_64-linux";
           in {
